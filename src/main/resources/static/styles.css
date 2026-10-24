@@ -1,0 +1,120 @@
+:root {
+  --ink: #1b2733;
+  --muted: #566372;
+  --paper: #eef1f4;
+  --panel: #ffffff;
+  --rule: #d3dae1;
+  --accent: #0a6c74;
+  --accent-strong: #08555c;
+  --danger: #a4262c;
+  --focus: #1d6fd8;
+  --radius: 6px;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--paper);
+  color: var(--ink);
+  font: 400 16px/1.5 "Public Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+
+.sr-only {
+  position: absolute; width: 1px; height: 1px; overflow: hidden;
+  clip: rect(0 0 0 0); white-space: nowrap;
+}
+
+.top {
+  display: flex; align-items: baseline; justify-content: space-between; gap: 1rem; flex-wrap: wrap;
+  max-width: 1120px; margin: 0 auto; padding: 1.75rem 1.25rem 1rem;
+}
+.top h1 { margin: 0; font-size: 1.75rem; font-weight: 700; letter-spacing: -0.01em; }
+
+/* The one memorable element: a stamp showing exactly which build is live */
+.stamp {
+  margin: 0; padding: 0.3rem 0.7rem;
+  border: 1.5px solid var(--accent); border-radius: 999px;
+  color: var(--accent-strong); font-size: 0.85rem; font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+.stamp.unknown { border-color: var(--rule); color: var(--muted); }
+
+.layout {
+  display: grid; gap: 1.25rem; align-items: start;
+  grid-template-columns: minmax(300px, 380px) 1fr;
+  max-width: 1120px; margin: 0 auto; padding: 0 1.25rem 3rem;
+}
+@media (max-width: 860px) { .layout { grid-template-columns: 1fr; } }
+
+.panel {
+  background: var(--panel); border: 1px solid var(--rule); border-radius: var(--radius);
+  padding: 1.25rem;
+}
+.panel h2 { margin: 0 0 1rem; font-size: 1.1rem; font-weight: 600; }
+.form-panel { position: sticky; top: 1rem; }
+@media (max-width: 860px) { .form-panel { position: static; } }
+
+.row.two { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; }
+@media (max-width: 480px) { .row.two { grid-template-columns: 1fr; } }
+
+.field { margin-bottom: 0.85rem; }
+label { display: block; margin-bottom: 0.25rem; font-size: 0.9rem; font-weight: 600; }
+.opt { font-weight: 400; color: var(--muted); }
+
+input {
+  width: 100%; padding: 0.55rem 0.65rem;
+  border: 1px solid #aeb8c3; border-radius: var(--radius);
+  background: #fff; color: var(--ink); font: inherit;
+}
+input[aria-invalid="true"] { border-color: var(--danger); }
+input:focus-visible, button:focus-visible {
+  outline: 3px solid var(--focus); outline-offset: 2px;
+}
+
+.err { min-height: 1.1em; margin: 0.2rem 0 0; color: var(--danger); font-size: 0.82rem; }
+.form-err { margin-bottom: 0.5rem; }
+
+.actions { display: flex; gap: 0.6rem; }
+button {
+  padding: 0.55rem 1rem; border-radius: var(--radius); border: 1px solid transparent;
+  font: inherit; font-weight: 600; cursor: pointer;
+}
+button.primary { background: var(--accent); color: #fff; }
+button.primary:hover { background: var(--accent-strong); }
+button.primary:disabled { opacity: 0.6; cursor: progress; }
+button.ghost { background: transparent; border-color: #aeb8c3; color: var(--ink); }
+button.ghost:hover { background: var(--paper); }
+button.link {
+  padding: 0.2rem 0.4rem; background: none; color: var(--accent-strong);
+  text-decoration: underline; font-weight: 600;
+}
+button.link.danger { color: var(--danger); }
+
+.list-head { display: flex; align-items: baseline; justify-content: space-between; }
+.list-head h2 { margin-bottom: 0.75rem; }
+.count { margin: 0; color: var(--muted); font-size: 0.9rem; }
+
+.table-wrap { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; font-size: 0.95rem; }
+th, td { padding: 0.6rem 0.5rem; text-align: left; vertical-align: top; border-bottom: 1px solid var(--rule); }
+th { font-size: 0.85rem; font-weight: 600; color: var(--muted); }
+td.actions-cell { white-space: nowrap; text-align: right; }
+tr.editing td { background: #e6f2f3; }
+td .sub { display: block; color: var(--muted); font-size: 0.85rem; }
+
+.empty { margin: 1rem 0; padding: 1.5rem; border: 1.5px dashed var(--rule); border-radius: var(--radius); color: var(--muted); }
+.note { margin: 1rem 0 0; color: var(--muted); font-size: 0.82rem; }
+
+.toast {
+  position: fixed; left: 50%; bottom: 1.25rem; transform: translate(-50%, 1rem);
+  padding: 0.6rem 1rem; border-radius: var(--radius);
+  background: var(--ink); color: #fff; font-weight: 600;
+  opacity: 0; pointer-events: none; transition: opacity 0.15s, transform 0.15s;
+}
+.toast.show { opacity: 1; transform: translate(-50%, 0); }
+.toast.error { background: var(--danger); }
+
+@media (prefers-reduced-motion: reduce) {
+  .toast { transition: none; }
+}

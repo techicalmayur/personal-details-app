@@ -1,0 +1,13 @@
+# Render Blueprint. Create it with: Dashboard -> New -> Blueprint -> pick your GitLab repo.
+services:
+  - type: web
+    name: personal-details-app
+    runtime: docker
+    plan: free
+    region: singapore          # closest Render region to India
+    branch: main
+    autoDeploy: false          # GitLab CI decides when to deploy, not every push
+    healthCheckPath: /actuator/health
+    envVars:
+      - key: SESSION_COOKIE_SECURE
+        value: "true"

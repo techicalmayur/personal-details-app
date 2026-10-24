@@ -1,0 +1,117 @@
+# Pipeline overview
+#   test     -> mvn verify (unit + MockMvc tests). Runs on every branch and MR.
+#   deploy   -> tells Render to deploy a specific commit. Runs ONLY on the default branch
+#               when the pipeline has DEPLOY=true (what the GitLab MCP sets).
+#   verify   -> polls /actuator/info until the live app reports the commit we just deployed.
+#
+# Roll back: run a pipeline on main with DEPLOY=true and DEPLOY_REF=<older commit SHA>.
+#
+# Required CI/CD variables (Settings > CI/CD > Variables):
+#   APP_URL            https://<your-service>.onrender.com   (no trailing slash)
+#   RENDER_SERVICE_ID  srv-xxxxxxxx   (from the Render deploy hook URL)
+#   RENDER_DEPLOY_KEY  the value after "key=" in the Render deploy hook URL (masked)
+
+stages:
+  - test
+  - deploy
+  - verify
+
+default:
+  image: maven:3.9-eclipse-temurin-21
+
+workflow:
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_COMMIT_BRANCH && $CI_OPEN_MERGE_REQUESTS
+      when: never
+    - if: $CI_COMMIT_BRANCH
+
+variables:
+  APP_URL: ""
+  MAVEN_OPTS: "-Dmaven.repo.local=$CI_PROJECT_DIR/.m2/repository"
+  DEPLOY:
+    value: "false"
+    description: "Set to true to deploy to production after this pipeline's checks (default branch only)."
+  DEPLOY_REF:
+    value: ""
+    description: "Commit SHA to deploy. Leave empty to deploy this pipeline's commit; set an older SHA to roll back."
+
+cache:
+  key:
+    files:
+      - pom.xml
+  paths:
+    - .m2/repository
+
+test:
+  stage: test
+  rules:
+    # A rollback pipeline must not be blocked by a broken main, so it skips tests.
+    - if: $DEPLOY_REF
+      when: never
+    - when: on_success
+  script:
+    - mvn -B -ntp verify
+  artifacts:
+    when: always
+    reports:
+      junit: target/surefire-reports/TEST-*.xml
+
+deploy_production:
+  stage: deploy
+  image: alpine:3.20
+  needs:
+    - job: test
+      optional: true
+  resource_group: production            # never run two deploys at once
+  environment:
+    name: production
+    url: $APP_URL
+  rules:
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH && $DEPLOY == "true"
+  before_script:
+    - apk add --no-cache curl
+  script:
+    - TARGET_SHA="${DEPLOY_REF:-$CI_COMMIT_SHA}"
+    - echo "Asking Render to deploy commit ${TARGET_SHA}"
+    - |
+      status=$(curl -sS -o /tmp/render.out -w '%{http_code}' -X POST \
+        "https://api.render.com/deploy/${RENDER_SERVICE_ID}?key=${RENDER_DEPLOY_KEY}&ref=${TARGET_SHA}")
+      cat /tmp/render.out; echo
+      if [ "$status" != "200" ]; then
+        echo "Render deploy hook returned HTTP ${status} (404 usually means the commit SHA is unknown to Render)"
+        exit 1
+      fi
+    - echo "Deploy started. The verify job will wait until it is live."
+
+verify_deployment:
+  stage: verify
+  image: alpine:3.20
+  needs:
+    - deploy_production
+  timeout: 30m
+  rules:
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH && $DEPLOY == "true"
+  before_script:
+    - apk add --no-cache curl jq
+  script:
+    - TARGET_SHA="${DEPLOY_REF:-$CI_COMMIT_SHA}"
+    - |
+      # Free Render instances sleep and Docker builds take a few minutes, so be patient:
+      # 120 tries x 10s = 20 minutes. The old version keeps serving until the new one is healthy.
+      for attempt in $(seq 1 120); do
+        live=$(curl -fsS --max-time 30 "${APP_URL}/actuator/info" 2>/dev/null | jq -r '.app.commit // empty' 2>/dev/null || true)
+        echo "[${attempt}/120] live commit: ${live:-<not reachable yet>} (want ${TARGET_SHA})"
+        if [ "$live" = "$TARGET_SHA" ]; then
+          break
+        fi
+        sleep 10
+      done
+
+      if [ "$live" != "$TARGET_SHA" ]; then
+        echo "Timed out: the live app never reported commit ${TARGET_SHA}"
+        exit 1
+      fi
+    - curl -fsS --max-time 30 "${APP_URL}/actuator/health" | jq -e '.status == "UP"'
+    - echo "Deployed and healthy:"
+    - curl -fsS --max-time 30 "${APP_URL}/actuator/info" | jq .

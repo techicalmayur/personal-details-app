@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Personal details</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header class="top">
+    <h1>Personal details</h1>
+    <p class="stamp" id="stamp" aria-live="polite">Checking version…</p>
+  </header>
+
+  <main class="layout">
+    <section class="panel form-panel" aria-labelledby="form-title">
+      <h2 id="form-title">Add a person</h2>
+      <form id="person-form" novalidate>
+        <div class="row two">
+          <div class="field">
+            <label for="firstName">First name</label>
+            <input id="firstName" name="firstName" autocomplete="given-name" required maxlength="50">
+            <p class="err" id="err-firstName"></p>
+          </div>
+          <div class="field">
+            <label for="lastName">Last name</label>
+            <input id="lastName" name="lastName" autocomplete="family-name" required maxlength="50">
+            <p class="err" id="err-lastName"></p>
+          </div>
+        </div>
+
+        <div class="field">
+          <label for="email">Email</label>
+          <input id="email" name="email" type="email" autocomplete="email" required maxlength="120">
+          <p class="err" id="err-email"></p>
+        </div>
+
+        <div class="row two">
+          <div class="field">
+            <label for="phone">Phone <span class="opt">(optional)</span></label>
+            <input id="phone" name="phone" type="tel" autocomplete="tel" maxlength="20">
+            <p class="err" id="err-phone"></p>
+          </div>
+          <div class="field">
+            <label for="dateOfBirth">Date of birth <span class="opt">(optional)</span></label>
+            <input id="dateOfBirth" name="dateOfBirth" type="date" autocomplete="bday">
+            <p class="err" id="err-dateOfBirth"></p>
+          </div>
+        </div>
+
+        <div class="field">
+          <label for="address">Address <span class="opt">(optional)</span></label>
+          <input id="address" name="address" autocomplete="street-address" maxlength="200">
+          <p class="err" id="err-address"></p>
+        </div>
+
+        <div class="row two">
+          <div class="field">
+            <label for="city">City <span class="opt">(optional)</span></label>
+            <input id="city" name="city" autocomplete="address-level2" maxlength="60">
+            <p class="err" id="err-city"></p>
+          </div>
+          <div class="field">
+            <label for="country">Country <span class="opt">(optional)</span></label>
+            <input id="country" name="country" autocomplete="country-name" maxlength="60">
+            <p class="err" id="err-country"></p>
+          </div>
+        </div>
+
+        <p class="err form-err" id="err-form" role="alert"></p>
+
+        <div class="actions">
+          <button type="submit" class="primary" id="submit">Save person</button>
+          <button type="button" class="ghost" id="cancel" hidden>Cancel</button>
+        </div>
+      </form>
+    </section>
+
+    <section class="panel list-panel" aria-labelledby="list-title">
+      <div class="list-head">
+        <h2 id="list-title">Saved people</h2>
+        <p class="count" id="count"></p>
+      </div>
+
+      <div class="table-wrap">
+        <table id="people-table" hidden>
+          <thead>
+            <tr>
+              <th scope="col">Name</th>
+              <th scope="col">Email</th>
+              <th scope="col">Phone</th>
+              <th scope="col">Location</th>
+              <th scope="col"><span class="sr-only">Actions</span></th>
+            </tr>
+          </thead>
+          <tbody id="people-body"></tbody>
+        </table>
+      </div>
+
+      <p class="empty" id="empty" hidden>Nobody saved yet. Fill in the form to add the first person.</p>
+      <p class="note">Records live in your browser session on the server. They are cleared when the session expires or the app restarts.</p>
+    </section>
+  </main>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+  <script src="app.js"></script>
+</body>
+</html>
